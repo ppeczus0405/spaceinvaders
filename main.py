@@ -1,10 +1,8 @@
-import pygame
-import os
+import game
 
-BACKGROUND = pygame.image.load(os.path.join("assets", "background-black.png"))
-# Enemy ships
-RED_ENEMY_SHIP = pygame.image.load(os.path.join("assets", "pixel_ship_red_small.png"))
-GREEN_ENEMY_SHIP = pygame.image.load(os.path.join("assets", "pixel_ship_green_small"))
-
-if __name__ == '__main__':
-    print("SpaceInvaders!")
+if __name__ == "__main__":
+    my_game = game.Game()
+    while my_game.is_running():
+        my_game.handle_events()
+        my_game.update()
+        my_game.render()
