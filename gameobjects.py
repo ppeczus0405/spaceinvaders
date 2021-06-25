@@ -2,6 +2,7 @@ import pygame
 import os
 import config
 from enum import Enum, auto
+from random import random
 
 # Pygame initialization
 pygame.init()
@@ -71,9 +72,6 @@ class Ship:
                          pygame.Rect(self.x, hp_y, green_width, config.HP_HEIGHT))
         pygame.draw.rect(screen, red,
                          pygame.Rect(self.x + green_width, hp_y, red_width, config.HP_HEIGHT))
-
-    def spawn_laser(self):
-        self.lasers.add(Laser(self.x, self.y - config.LASER_CORRECTION, config.LASER_POWER, self.color))
 
     def delete_outside_lasers(self):
         to_delete = None
@@ -150,20 +148,45 @@ class Player(Ship):
 
     def render(self):
         super().render()
-        super().render_hp(self.y + self.texture.get_height() + config.SHIP_CORRECTION)
+        self.render_hp(self.y + self.texture.get_height() + config.SHIP_CORRECTION)
+
+    def spawn_laser(self):
+        self.lasers.add(Laser(self.x, self.y - config.LASER_CORRECTION_PLAYER, config.LASER_POWER, self.color))
+
+    def update(self):
+        for laser in self.lasers:
+            laser.move(-config.LASER_MOVE)
+        self.delete_outside_lasers()
 
 
 class Enemy(Ship):
-    dict = {Color.RED: RED_ENEMY_SHIP,
-            Color.BLUE: BLUE_ENEMY_SHIP,
-            Color.GREEN: GREEN_ENEMY_SHIP}
+    dict = {Color.RED: (RED_ENEMY_SHIP, config.LASER_CORRECTION_RG_X, config.LASER_CORRECTION_RG_Y),
+            Color.BLUE: (BLUE_ENEMY_SHIP, config.LASER_CORRECTION_B_X, config.LASER_CORRECTION_B_Y),
+            Color.GREEN: (GREEN_ENEMY_SHIP, config.LASER_CORRECTION_RG_X, config.LASER_CORRECTION_RG_Y)}
 
-    def __init__(self, x, color, health=config.ENEMY_BASE_HEALTH):
-        super().__init__(x, config.ENEMY_START_Y, color, health)
-        self.texture = Enemy.dict[color]
+    def __init__(self, x, color, level):
+        super().__init__(x, config.ENEMY_START_Y,
+                         color, config.ENEMY_BASE_HEALTH + level * config.LEVEL_HP)
+        self.speed = int(config.ENEMY_BASE_SPEED + level * config.LEVEL_SPEED)
+        self.chance = config.ENEMY_BASE_CHANCE - level * config.LEVEL_CHANCE
+        self.texture = Enemy.dict[color][0]
         self.mask = pygame.mask.from_surface(self.texture)
+
+    def spawn_laser(self):
+        self.lasers.add(Laser(self.x + Enemy.dict[self.color][1],
+                              self.y + Enemy.dict[self.color][2],
+                              config.LASER_POWER, self.color))
 
     def render(self):
         super().render()
         super().render_hp(self.y - config.SHIP_CORRECTION)
+
+    def update(self):
+        self.move(0, self.speed)
+        r = int(random() * self.chance)
+        if not r:
+            self.spawn_laser()
+        for laser in self.lasers:
+            laser.move(config.LASER_MOVE)
+        self.delete_outside_lasers()
 
