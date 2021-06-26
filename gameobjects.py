@@ -7,16 +7,18 @@ from random import random
 # Pygame initialization
 pygame.init()
 screen = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
+font = pygame.font.SysFont(config.FONT, config.FONT_SIZE)
 
 
 # Support function
-def load_surface_and_scale(surfName, width = 0, height = 0):
-    loaded_image =  pygame.image.load(os.path.join("assets", surfName))
+def load_surface_and_scale(surf_name, width=0, height=0):
+    loaded_image = pygame.image.load(os.path.join("assets", surf_name))
     if width > 0 and height > 0:
         return pygame.transform.scale(loaded_image, (width, height))
     img_width = loaded_image.get_rect().width
     img_height = loaded_image.get_rect().height
-    return pygame.transform.scale(loaded_image, (int(img_width * config.SCALE_OBJECTS), int(img_height * config.SCALE_OBJECTS)))
+    return pygame.transform.scale(loaded_image, (int(img_width * config.SCALE_OBJECTS),
+                                                 int(img_height * config.SCALE_OBJECTS)))
 
 
 # Pygame surfaces for each game element
@@ -44,6 +46,13 @@ class Color(Enum):
     YELLOW = auto()
 
 
+def is_inside_window(object):
+    return (object.y + object.texture.get_height() >= 0
+            and object.y <= config.HEIGHT
+            and object.x <= config.WIDTH
+            and object.x + object.texture.get_width() >= 0)
+
+
 # Base class for Player, Enemy classes
 class Ship:
     def __init__(self, x, y, color, health=100):
@@ -58,11 +67,15 @@ class Ship:
         self.lasers = set()
 
     def render(self):
-        screen.blit(self.texture, (self.x, self.y))
+        if self.alive:
+            screen.blit(self.texture, (self.x, self.y))
         for laser in self.lasers:
             laser.render()
 
     def render_hp(self, hp_y):
+        if not self.alive:
+            return
+
         hp_ratio = self.health / self.max_health
         green_width = max(0, int(hp_ratio * self.texture.get_width()))
         red_width = self.texture.get_width() - green_width
@@ -76,16 +89,20 @@ class Ship:
     def delete_outside_lasers(self):
         to_delete = None
         for laser in self.lasers:
-            if not laser.is_inside():
+            if not is_inside_window(laser):
                 to_delete = laser
+                break
         if to_delete is not None:
             self.lasers.remove(to_delete)
 
     def collide(self, other):
+        if not self.alive:
+            return False
+
         offset = (other.x - self.x, other.y - self.y)
         return self.mask.overlap(other.mask, offset) is not None
 
-    def get_wounded(self, hp):
+    def get_wounded(self, hp=config.LASER_POWER):
         self.health -= hp
         if self.health <= 0:
             self.alive = False
@@ -114,10 +131,10 @@ class Laser:
             Color.BLUE: BLUE_LASER,
             Color.YELLOW: PLAYER_LASER}
 
-    def __init__(self, x, y, hp, color):
+    def __init__(self, x, y, color):
         self.x = x
         self.y = y
-        self.hp = hp
+        self.hp = config.LASER_POWER
         self.texture = Laser.dict[color]
         self.mask = pygame.mask.from_surface(self.texture)
 
@@ -127,31 +144,26 @@ class Laser:
     def render(self):
         screen.blit(self.texture, (self.x, self.y))
 
-    def is_inside(self):
-        return (self.y + self.texture.get_height() >= 0
-                and self.y <= config.HEIGHT
-                and self.x <= config.WIDTH
-                and self.x + self.texture.get_width() >= 0)
-
 
 class Player(Ship):
     def __init__(self, x, y):
         super().__init__(x, y, Color.YELLOW, config.PLAYER_MAX_HEALTH)
         self.texture = PLAYER_SHIP
         self.mask = pygame.mask.from_surface(self.texture)
+        self.score = 0
 
     def move(self, dx, dy):
         self.x = max(-config.SHIP_CORRECTION, min(self.x + dx,
-                                                    config.WIDTH - self.texture.get_width() + config.SHIP_CORRECTION))
+                                                  config.WIDTH - self.texture.get_width() + config.SHIP_CORRECTION))
         self.y = max(-config.SHIP_CORRECTION, min(self.y + dy,
-                                                    config.HEIGHT - self.texture.get_height()))
+                                                  config.HEIGHT - self.texture.get_height()))
 
     def render(self):
         super().render()
         self.render_hp(self.y + self.texture.get_height() + config.SHIP_CORRECTION)
 
     def spawn_laser(self):
-        self.lasers.add(Laser(self.x, self.y - config.LASER_CORRECTION_PLAYER, config.LASER_POWER, self.color))
+        self.lasers.add(Laser(self.x, self.y - config.LASER_CORRECTION_PLAYER, self.color))
 
     def update(self):
         for laser in self.lasers:
@@ -173,9 +185,10 @@ class Enemy(Ship):
         self.mask = pygame.mask.from_surface(self.texture)
 
     def spawn_laser(self):
-        self.lasers.add(Laser(self.x + Enemy.dict[self.color][1],
-                              self.y + Enemy.dict[self.color][2],
-                              config.LASER_POWER, self.color))
+        if self.is_alive():
+            self.lasers.add(Laser(self.x + Enemy.dict[self.color][1],
+                                  self.y + Enemy.dict[self.color][2],
+                                  self.color))
 
     def render(self):
         super().render()
@@ -188,5 +201,3 @@ class Enemy(Ship):
             self.spawn_laser()
         for laser in self.lasers:
             laser.move(config.LASER_MOVE)
-        self.delete_outside_lasers()
-
