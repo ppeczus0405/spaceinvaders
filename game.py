@@ -2,7 +2,9 @@ import pygame
 import gameobjects
 import config
 import random
-from gameobjects import screen, font, Player, Enemy, Color
+from player import Player
+from enemy import Enemy
+from gameobjects import screen, font, Color
 
 
 class Game:
