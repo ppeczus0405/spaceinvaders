@@ -63,7 +63,6 @@ class Game:
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.end_ui is not None:
                     if self.end_ui.is_retry():
-                        self.end_ui = None
                         self._restart_game()
                     elif self.end_ui.is_quit():
                         self.running = False
@@ -92,7 +91,7 @@ class Game:
         pygame.display.flip()
 
     def _update_enemy_spawn(self):
-        if not self._count_alive_enemies():
+        if not self._count_alive_enemies() and not self.to_spawn:
             self.to_spawn += Game.how_many_spawn()
         many_spawned = 0
         for i in range(self.to_spawn):
@@ -159,4 +158,4 @@ class Game:
         return False
 
     def _restart_game(self):
-        pass
+        self.__init__()

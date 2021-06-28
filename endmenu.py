@@ -10,7 +10,7 @@ class EndUI:
         self.__quit_texture = gameobjects.QUIT
         self.__retry_texture = gameobjects.RETRY
         width_correct = (config.WIDTH - 2 * self.__quit_texture.get_width()) / 3
-        retry_x =  self.__quit_texture.get_width() + 2 * width_correct
+        retry_x = self.__quit_texture.get_width() + 2 * width_correct
         self.__quit_position = (width_correct, config.BUTTON_Y)
         self.__retry_position = (retry_x, config.BUTTON_Y)
 
@@ -30,7 +30,7 @@ class EndUI:
         blur_surf = pygame.Surface((config.WIDTH, config.HEIGHT))
         blur_surf.set_alpha(240)
         blur_surf.fill((0, 0, 0))
-        color = (255, 255, 90)
+        color = (255, 255, 50)
         string_surf = end_font.render("Your Score:", False, color)
         score_surf = end_font.render(str(self.__score), False, color)
         screen.blit(blur_surf, (0, 0))
