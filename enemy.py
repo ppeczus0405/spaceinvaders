@@ -15,7 +15,7 @@ class Enemy(Ship):
     def __init__(self, x, color, level):
         super().__init__(x, config.ENEMY_START_Y,
                          color, config.ENEMY_BASE_HEALTH + level * config.LEVEL_HP)
-        self.speed = int(config.ENEMY_BASE_SPEED + level * config.LEVEL_SPEED)
+        self.speed = config.ENEMY_BASE_SPEED + level * config.LEVEL_SPEED
         self.chance = config.ENEMY_BASE_CHANCE - level * config.LEVEL_CHANCE
         self.texture = Enemy.dict[color][0]
         self.mask = pygame.mask.from_surface(self.texture)

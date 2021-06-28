@@ -11,12 +11,22 @@ class Player(Ship):
         self.texture = PLAYER_SHIP
         self.mask = pygame.mask.from_surface(self.texture)
         self.score = 0
+        self.lives = config.PLAYER_LIVES
 
     def move(self, dx, dy):
         self.x = max(-config.SHIP_CORRECTION, min(self.x + dx,
                                                   config.WIDTH - self.texture.get_width() + config.SHIP_CORRECTION))
         self.y = max(-config.SHIP_CORRECTION, min(self.y + dy,
                                                   config.HEIGHT - self.texture.get_height()))
+
+    def get_wounded(self, hp=config.LASER_POWER):
+        self.health -= hp
+        if self.health <= 0:
+            if self.lives > 0:
+                self.lives -= 1
+                self.health = config.PLAYER_MAX_HEALTH
+            else:
+                self.alive = False
 
     def render(self):
         super().render()

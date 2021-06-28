@@ -18,7 +18,7 @@ class Ship:
 
     def render(self):
         if self.alive:
-            screen.blit(self.texture, (self.x, self.y))
+            screen.blit(self.texture, (int(self.x), int(self.y)))
         for laser in self.lasers:
             laser.render()
 
@@ -32,9 +32,9 @@ class Ship:
         green = (0, 255, 0)
         red = (255, 0, 0)
         pygame.draw.rect(screen, green,
-                         pygame.Rect(self.x, hp_y, green_width, config.HP_HEIGHT))
+                         pygame.Rect(int(self.x), int(hp_y), green_width, config.HP_HEIGHT))
         pygame.draw.rect(screen, red,
-                         pygame.Rect(self.x + green_width, hp_y, red_width, config.HP_HEIGHT))
+                         pygame.Rect(int(self.x + green_width), int(hp_y), red_width, config.HP_HEIGHT))
 
     def delete_outside_lasers(self):
         to_delete = None
@@ -49,7 +49,7 @@ class Ship:
         if not self.alive:
             return False
 
-        offset = (other.x - self.x, other.y - self.y)
+        offset = (int(other.x - self.x), int(other.y - self.y))
         return self.mask.overlap(other.mask, offset) is not None
 
     def get_wounded(self, hp=config.LASER_POWER):
